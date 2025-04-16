@@ -1,2 +1,2 @@
 # makit
-一つのコマンドでファイルやディレクトリを作成できすCLIツール
+A CLI tool that allows you to create files and directories with a single command
