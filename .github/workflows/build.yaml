@@ -32,14 +32,14 @@ jobs:
 
       - name: Convert Coverage Format to LCOV
         uses: jandelgado/gcov2lcov-action@v1.0.0
-        if: "matrix.os == 'ubuntu-latest'"
         with:
           infile: coverage.out
           outfile: coverage.lcov
+        if: "matrix.os == 'ubuntu-latest'"
 
       - name: Coveralls
         uses: coverallsapp/github-action@v1.0.1
-        if: "matrix.os == 'ubuntu-latest'"
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: coverage.lcov
+        if: "matrix.os == 'ubuntu-latest'"
