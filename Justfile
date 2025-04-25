@@ -11,7 +11,7 @@ Version := `grep '^const VERSION = ' cmd/main/version.go | sed "s/^VERSION = \"\
     just --list
 
 build: test
-    go build -o wildcherry cmd/main/makit.go
+    go build -o makit cmd/main/makit.go
 
 test:
     go test -covermode=count -coverprofile=coverage.out ./...
