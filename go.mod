@@ -1,3 +1,3 @@
-module github.com/USER/REPO_NAME
+module github.com/kai20020918/makit
 
 go 1.16
