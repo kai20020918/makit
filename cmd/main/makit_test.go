@@ -3,9 +3,9 @@ package main
 import "testing"
 
 func Example_makit() {
-	goMain([]string{"makit"})
+	goMain([]string{"makit!"})
 	// Output:
-	// Welcome to WildCherry!
+	// Welcome to makit!
 }
 
 func TestHello(t *testing.T) {
