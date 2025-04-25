@@ -1,6 +1,6 @@
 # 🗂️ makit
 
-A CLI tool that allows you to create files and directories with a single command
+A CLI tool that allows you to create files and directories with a single command  
 ![MIT License](https://img.shields.io/badge/license-MIT-blue "MIT License")
 [![Go Report Card](https://goreportcard.com/badge/github.com/kai20020918/makit)](https://goreportcard.com/report/github.com/kai20020918/makit)
 [![Coverage Status](https://coveralls.io/repos/github/kai20020918/makit/badge.svg?branch=main)](https://coveralls.io/github/kai20020918/makit?branch=main)
