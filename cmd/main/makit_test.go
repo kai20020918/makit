@@ -5,7 +5,7 @@ import "testing"
 func Example_makit() {
 	goMain([]string{"makit!"})
 	// Output:
-	// Welcome to test!
+	// Welcome to makit!
 }
 
 func TestHello(t *testing.T) {
