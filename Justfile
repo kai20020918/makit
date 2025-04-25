@@ -1,5 +1,3 @@
-@default: help
-
 App := 'makit'
 Version := `grep '^const VERSION = ' cmd/main/version.go | sed "s/^VERSION = \"\(.*\)\"/\1/g"`
 
@@ -10,8 +8,15 @@ Version := `grep '^const VERSION = ' cmd/main/version.go | sed "s/^VERSION = \"\
     echo ""
     just --list
 
+# build the application with running tests
 build: test
     go build -o makit cmd/main/makit.go
 
+# run tests and generate the coverage report
 test:
     go test -covermode=count -coverprofile=coverage.out ./...
+
+# clean up build artifacts
+clean:
+    go clean
+    rm -f coverage.out makit
