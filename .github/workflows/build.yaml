@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: just build test
 
-      - name: Convert Coverage Format to LCOV
+      - name: Convert Coverage Format to lcov
         uses: jandelgado/gcov2lcov-action@v1.0.0
         with:
           infile: coverage.out
