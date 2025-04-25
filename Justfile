@@ -1,6 +1,6 @@
 @default: help
 
-App := 'makit'
+App := 'Makit'
 Version := `grep '^const VERSION = ' cmd/main/version.go | sed "s/^VERSION = \"\(.*\)\"/\1/g"`
 
 # show help message
