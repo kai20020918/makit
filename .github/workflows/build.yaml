@@ -41,6 +41,6 @@ jobs:
         uses: coverallsapp/github-action@v2.3.0
         with:
           github-token: ${{ secrets.github_token }}
-          path-to-lcov: coverage.lcov
+          file: coverage.out
           format: golang
         if: "matrix.os == 'ubuntu-latest'"
