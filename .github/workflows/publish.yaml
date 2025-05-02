@@ -4,7 +4,7 @@ on:
     branches:
       - main
     types: [closed]
-
+# テスト
 jobs:
   setup:
     runs-on: ubuntu-latest

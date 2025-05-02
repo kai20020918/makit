@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - "**"
-# コメント
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
