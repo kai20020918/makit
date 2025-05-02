@@ -42,4 +42,4 @@ make_distribution_files:
     done
 
 upload_assets tag:
-    gh release upload --repo tamada/makit {{ tag }} dist/*.tar.gz
+    gh release upload --repo kai20020918/makit {{ tag }} dist/*.tar.gz
