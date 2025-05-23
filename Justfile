@@ -1,5 +1,6 @@
-@default:help
-
+# show help message
+@default: help
+#test
 App := 'makit'
 Version := `grep '^const VERSION = ' cmd/main/version.go | sed "s/^VERSION = \"\(.*\)\"/\1/g"`
 
@@ -21,7 +22,7 @@ test:
 # clean up build artifacts
 clean:
     go clean
-    rm -f coverage.out makit
+    rm -f coverage.out makit build
 
 # update the version if the new version is provided
 update_version new_version = "":
