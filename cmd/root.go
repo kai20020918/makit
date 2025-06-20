@@ -16,7 +16,7 @@ var (
 	timestamp string
 	noCreate  bool
 )
-
+// -hの実装
 var rootCmd = &cobra.Command{
 	Use:   "makit [OPTION] <FILES|DIRS...>",
 	Short: "Create files and directories with optional mode and timestamp",
