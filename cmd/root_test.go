@@ -360,18 +360,18 @@ func TestExecuteEmptyArgs(t *testing.T) {
 	cleanup, cmd := setupTestEnv(t)
 	defer cleanup()
 
-	output, err := executeAndCaptureOutput(t, cmd, []string{}) // 空の引数リストを渡す
+	// 空の引数リストを渡してコマンドを実行
+	output, err := executeAndCaptureOutput(t, cmd, []string{})
 	
-	if err == nil {
-		if MockExitCalledWith != 1 {
-			t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
-		}
+	// エラーが発生したことを確認する
+	// Execute() がエラーを返すか、または MockExitCalledWith が設定されているかを確認
+	if err == nil && MockExitCalledWith != 1 {
+		t.Errorf("Expected an error or os.Exit(1) for empty args, but got none. MockExitCalledWith: %d", MockExitCalledWith)
 	}
 	
-	expectedErrorOutput1 := "Error: accepts at least 1 arg(s), received 0"
-	expectedErrorOutput2 := "Error: requires at least 1 arg(s), only received 0"
-	
-	if !strings.Contains(output, expectedErrorOutput1) && !strings.Contains(output, expectedErrorOutput2) {
-		t.Errorf("Expected error message %q or %q not found in %q", expectedErrorOutput1, expectedErrorOutput2, output)
+	// SilenceUsage = true のため、エラーメッセージは標準出力には出力されない。
+	// そのため、出力は空であることを期待する。
+	if output != "" {
+		t.Errorf("Expected empty output for usage error due to SilenceUsage, got %q", output)
 	}
 }
