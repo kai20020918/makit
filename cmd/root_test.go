@@ -4,6 +4,7 @@ package cmd
 import (
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -240,27 +241,35 @@ func TestExecuteInvalidMode(t *testing.T) {
 
 // TestExecuteValidMode は有効なモード指定をテストします。
 func TestExecuteValidMode(t *testing.T) {
-	cleanup, cmd := setupTestEnv(t)
-	defer cleanup()
+    cleanup, cmd := setupTestEnv(t)
+    defer cleanup()
 
-	testFileName := "mode_test.txt"
-	modeStr := "755"
-	expectedPerm := os.FileMode(0755)
+    testFileName := "mode_test.txt"
+    modeStr := "755" // makit コマンドに渡す文字列
 
-	_, err := executeAndCaptureOutput(t, cmd, []string{"-m", modeStr, testFileName})
-	if err != nil {
-		t.Fatalf("Execute() failed: %v", err)
-	}
+    // 期待するパーミッションをOSによって変更
+    expectedPerm := os.FileMode(0755)
+    if runtime.GOOS == "windows" { // ★ここから追加
+        // Windowsではファイルの実行権限は通常設定されない
+        // OpenFile/Chmod で 0755 を指定しても 0666 や 0644 になることが多い
+        // テストでは 0666 を期待するようにする
+        expectedPerm = os.FileMode(0666) // または 0644、環境に依存する可能性あり
+    } // ★ここまで追加
 
-	info, err := os.Stat(testFileName)
-	if err != nil {
-		t.Fatalf("Failed to stat file %s: %v", testFileName, err)
-	}
-	if info.Mode().Perm() != expectedPerm {
-		t.Errorf("Expected permission %o, got %o", expectedPerm, info.Mode().Perm())
-	}
+    _, err := executeAndCaptureOutput(t, cmd, []string{"-m", modeStr, testFileName})
+    if err != nil {
+        t.Fatalf("Execute() failed: %v", err)
+    }
+
+    info, err := os.Stat(testFileName)
+    if err != nil {
+        t.Fatalf("Failed to stat file %s: %v", testFileName, err)
+    }
+    actualPerm := info.Mode() & os.ModePerm
+    if actualPerm != expectedPerm {
+        t.Errorf("Expected permission %o, got %o", expectedPerm, actualPerm)
+    }
 }
-
 // TestExecuteInvalidTimestamp は無効なタイムスタンプ指定をテストします。
 func TestExecuteInvalidTimestamp(t *testing.T) {
 	cleanup, cmd := setupTestEnv(t)
