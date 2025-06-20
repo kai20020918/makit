@@ -1,3 +1,4 @@
+// cmd/root.go (修正版)
 package cmd
 
 import (
@@ -16,6 +17,8 @@ var (
 	timestamp string
 	noCreate  bool
 	verbose   bool
+	// exitFunc を追加し、テスト中に os.Exit をモック可能にする
+	exitFunc = os.Exit // デフォルトは os.Exit
 )
 
 // newRootCommand は新しい Cobra コマンドインスタンスを作成し、フラグを初期化します。
@@ -41,7 +44,7 @@ func newRootCommand() *cobra.Command {
 					perm = os.FileMode(parsed)
 				} else {
 					fmt.Fprintf(os.Stderr, "invalid mode: %v\n", err)
-					// os.Exit(1) // エラー時は終了
+					exitFunc(1) // ★ os.Exit(1) を exitFunc(1) に変更
 				}
 				if verbose {
 					fmt.Printf("Parsed permission mode: %o\n", perm)
@@ -53,7 +56,7 @@ func newRootCommand() *cobra.Command {
 				t, err := time.Parse("200601021504", timestamp)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "invalid timestamp format: %v\n", err)
-					// os.Exit(1) // エラー時は終了
+					exitFunc(1) // ★ os.Exit(1) を exitFunc(1) に変更
 				}
 				tsTime = t
 				if verbose {
@@ -83,7 +86,7 @@ func newRootCommand() *cobra.Command {
 						err := os.MkdirAll(path, perm)
 						if err != nil {
 							fmt.Printf("Error creating directory: %v\n", err)
-							// os.Exit(1) // エラー時は終了
+							exitFunc(1) // ★ os.Exit(1) を exitFunc(1) に変更
 						}
 						fmt.Printf("Created directory: %s\n", path)
 					} else { // ファイルと判断
@@ -100,7 +103,7 @@ func newRootCommand() *cobra.Command {
 						f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, perm)
 						if err != nil {
 							fmt.Printf("Error creating file: %v\n", err)
-							// os.Exit(1) // エラー時は終了
+							exitFunc(1) // ★ os.Exit(1) を exitFunc(1) に変更
 						}
 						f.Close()
 						fmt.Printf("Created file: %s\n", path)
@@ -146,7 +149,7 @@ func Execute() {
 	cmd := newRootCommand()
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
-		// os.Exit(1)
+		exitFunc(1) // ★ os.Exit(1) を exitFunc(1) に変更
 	}
 }
 

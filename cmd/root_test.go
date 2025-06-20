@@ -1,3 +1,4 @@
+// cmd/root_test.go (修正版)
 package cmd
 
 import (
@@ -10,8 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// setupTestEnv はテスト環境をセットアップし、終了時にクリーンアップします。
-// 各テストで新しいコマンドインスタンスを返します。
+// MockExitCalledWith は、exitFunc が呼び出された場合のコードを保持します
+var MockExitCalledWith int
+
+// setupTestEnv を修正し、テスト中に exitFunc をモックする
 func setupTestEnv(t *testing.T) (cleanup func(), cmdInstance *cobra.Command) {
 	// テスト用の作業ディレクトリを作成
 	testDir, err := ioutil.TempDir("", "makit-test-")
@@ -23,16 +26,24 @@ func setupTestEnv(t *testing.T) (cleanup func(), cmdInstance *cobra.Command) {
 	originalDir, _ := os.Getwd()
 	os.Chdir(testDir)
 
+	// os.Exit をテスト用にモックする
+	originalExit := exitFunc
+	MockExitCalledWith = -1 // リセット
+	exitFunc = func(code int) {
+		MockExitCalledWith = code
+		// テストの実行を停止するためにパニックを発生させる
+		// 実際の os.Exit は呼び出さない
+		panic("os.Exit called during test")
+	}
+
 	// 各テストのために新しいコマンドインスタンスを作成
-	testCmd := newRootCommand() // ★ここが重要：新しいコマンドインスタンスを取得
+	testCmd := newRootCommand()
 
 	// クリーンアップ関数を返す
 	cleanupFunc := func() {
 		os.Chdir(originalDir) // 元のディレクトリに戻る
 		os.RemoveAll(testDir) // テストディレクトリを削除
-
-		// グローバルな os.Stdout/Stderr のリダイレクトをテストごとに元に戻す
-		// Cobra の SetOut/SetErr はここでは行わない (Execute()内で処理されるため)
+		exitFunc = originalExit // テスト終了後に元の os.Exit に戻す
 	}
 
 	return cleanupFunc, testCmd
@@ -40,7 +51,7 @@ func setupTestEnv(t *testing.T) (cleanup func(), cmdInstance *cobra.Command) {
 
 // executeAndCaptureOutput はコマンドを実行し、標準出力と標準エラー出力をキャプチャします。
 // Cobraコマンドインスタンスを引数として受け取るように変更
-func executeAndCaptureOutput(t *testing.T, cmd *cobra.Command, args []string) (string, error) {
+func executeAndCaptureOutput(t *testing.T, cmd *cobra.Command, args []string) (output string, err error) {
 	// 標準出力と標準エラーをキャプチャするためのパイプを作成
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -52,41 +63,39 @@ func executeAndCaptureOutput(t *testing.T, cmd *cobra.Command, args []string) (s
 	// Cobraコマンドの引数を設定
 	cmd.SetArgs(args)
 
-	// Execute() を呼び出し
-	// 注意: Execute() が os.Exit() を呼ぶ可能性があるため、
-	// テスト内で直接 os.Exit() を防ぐためには、
-	// rootCmd.ExecuteC() を使うのがより頑健な方法です。
-	// しかし、ここでは現状のコードに合わせて Execute() を使います。
-	// cmd.Execute() がエラーを返さず os.Exit(1) を呼んだ場合、テストが失敗します。
-	err := cmd.Execute()
+	// defer-recover ブロックを使って、モックされた os.Exit からのパニックをキャッチする
+	defer func() {
+		if r := recover(); r != nil {
+			if str, ok := r.(string); ok && strings.Contains(str, "os.Exit called during test") {
+				// これは期待されるパニックなので、何もしない
+			} else {
+				panic(r) // 予期せぬパニックは再パニックさせる
+			}
+		}
+		// パイプを閉じて、出力を読み込む
+		wOut.Close()
+		wErr.Close()
+		os.Stdout = oldStdout
+		os.Stderr = oldStderr
+		outBytes, _ := ioutil.ReadAll(rOut)
+		errBytes, _ := ioutil.ReadAll(rErr)
+		rOut.Close()
+		rErr.Close()
+		output = string(outBytes) + string(errBytes)
+	}()
 
-	// パイプを閉じて、出力を読み込む準備
-	wOut.Close()
-	wErr.Close()
-	
-	// 標準出力と標準エラーを元に戻す (重要)
-	os.Stdout = oldStdout
-	os.Stderr = oldStderr
+	err = cmd.Execute() // コマンドを実行する
 
-	// 出力を読み込む
-	outBytes, _ := ioutil.ReadAll(rOut)
-	errBytes, _ := ioutil.ReadAll(rErr)
-
-	// バッファを閉じる
-	rOut.Close()
-	rErr.Close()
-
-	// 標準出力と標準エラーの文字列を結合して返す
-	return string(outBytes) + string(errBytes), err
+	return output, err
 }
 
 // TestExecuteCreateFile はファイルの作成をテストします。
 func TestExecuteCreateFile(t *testing.T) {
-	cleanup, cmd := setupTestEnv(t) // ★ cmd インスタンスを取得
+	cleanup, cmd := setupTestEnv(t)
 	defer cleanup()
 
 	testFileName := "test_file.txt"
-	output, err := executeAndCaptureOutput(t, cmd, []string{testFileName}) // ★ cmd を渡す
+	output, err := executeAndCaptureOutput(t, cmd, []string{testFileName})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -135,8 +144,6 @@ func TestExecuteCreateNestedDirectory(t *testing.T) {
 		t.Errorf("Nested directory %s was not created", testPath)
 	}
 	expectedOutput := "Created directory: " + testPath + "\n"
-	// MkdirAllのverbose出力が追加されたので、strings.Containsがより適切になる可能性あり
-	// ここは簡潔さを保つため Contains でよい
 	if !strings.Contains(output, expectedOutput) {
 		t.Errorf("Expected output %q not found in %q", expectedOutput, output)
 	}
@@ -157,7 +164,6 @@ func TestExecuteCreateFileInNewDirectory(t *testing.T) {
 		t.Errorf("File %s was not created in new directory", testPath)
 	}
 	expectedFileCreationOutput := "Created file: " + testPath + "\n"
-	// MkdirAll の出力があるかもしれないので Contains を使用
 	if !strings.Contains(output, expectedFileCreationOutput) {
 		t.Errorf("Expected output %q not found in %q", expectedFileCreationOutput, output)
 	}
@@ -170,7 +176,6 @@ func TestExecuteNoCreateExistingFile(t *testing.T) {
 	defer cleanup()
 
 	testFileName := "existing.txt"
-	// 事前にファイルを作成
 	err := ioutil.WriteFile(testFileName, []byte("hello"), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create pre-existing file: %v", err)
@@ -219,11 +224,14 @@ func TestExecuteInvalidMode(t *testing.T) {
 	defer cleanup()
 
 	output, err := executeAndCaptureOutput(t, cmd, []string{"-m", "invalid_mode", "dummy.txt"})
-	if err == nil {
-		t.Errorf("Expected an error for invalid mode, but got none")
+	
+	// Execute() がエラーを返すか、または MockExitCalledWith が設定されているかを確認
+	if err != nil {
+        // Execute() がエラーを返した場合、ここでエラーメッセージをチェック
+    } else if MockExitCalledWith != 1 {
+		t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
 	}
 
-	// エラーは stderr に出力される可能性もあるので、両方をキャプチャして確認
 	expectedErrorOutput := "invalid mode"
 	if !strings.Contains(output, expectedErrorOutput) {
 		t.Errorf("Expected error message %q not found in %q", expectedErrorOutput, output)
@@ -259,8 +267,11 @@ func TestExecuteInvalidTimestamp(t *testing.T) {
 	defer cleanup()
 
 	output, err := executeAndCaptureOutput(t, cmd, []string{"-d", "invalid_timestamp", "dummy.txt"})
-	if err == nil {
-		t.Errorf("Expected an error for invalid timestamp, but got none")
+
+	if err != nil {
+        // Execute() がエラーを返した場合、ここでエラーメッセージをチェック
+    } else if MockExitCalledWith != 1 {
+		t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
 	}
 
 	expectedErrorOutput := "invalid timestamp format"
@@ -276,7 +287,9 @@ func TestExecuteValidTimestamp(t *testing.T) {
 
 	testFileName := "timestamp_test.txt"
 	timestampStr := "202401011030"
-	expectedTime, _ := time.Parse("200601021504", timestampStr)
+	loc, _ := time.LoadLocation("UTC") // タイムゾーンをUTCに明示的に設定
+	expectedTime, _ := time.ParseInLocation("200601021504", timestampStr, loc)
+
 
 	_, err := executeAndCaptureOutput(t, cmd, []string{"-d", timestampStr, testFileName})
 	if err != nil {
@@ -287,9 +300,9 @@ func TestExecuteValidTimestamp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to stat file %s: %v", testFileName, err)
 	}
-	// Chtimesはアクセス時間と変更時間を両方セットするので、変更時間を確認
-	if info.ModTime().Truncate(time.Second) != expectedTime.Truncate(time.Second) {
-		t.Errorf("Expected modification time %s, got %s", expectedTime, info.ModTime())
+	// 最終更新時刻をUTCに変換し、秒単位で切り捨てて比較する
+	if info.ModTime().In(loc).Truncate(time.Second) != expectedTime.Truncate(time.Second) {
+		t.Errorf("Expected modification time %s (UTC), got %s (UTC)", expectedTime.Format(time.RFC3339), info.ModTime().In(loc).Format(time.RFC3339))
 	}
 }
 
@@ -350,15 +363,15 @@ func TestExecuteEmptyArgs(t *testing.T) {
 	output, err := executeAndCaptureOutput(t, cmd, []string{}) // 空の引数リストを渡す
 	
 	if err == nil {
-		t.Errorf("Expected an error for no arguments, but got none")
-	}
-	// エラーメッセージの確認（Cobraのデフォルトエラーメッセージを期待）
-	// Cobraのバージョンによってメッセージが異なる可能性があるのでContainsで確認
-	expectedErrorOutput := "Error: accepts at least 1 arg(s), received 0"
-	if !strings.Contains(output, expectedErrorOutput) {
-		expectedErrorOutput = "Error: requires at least 1 arg(s), only received 0"
-		if !strings.Contains(output, expectedErrorOutput) {
-			t.Errorf("Expected error message %q or %q not found in %q", "Error: accepts at least 1 arg(s), received 0", "Error: requires at least 1 arg(s), only received 0", output)
+		if MockExitCalledWith != 1 {
+			t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
 		}
+	}
+	
+	expectedErrorOutput1 := "Error: accepts at least 1 arg(s), received 0"
+	expectedErrorOutput2 := "Error: requires at least 1 arg(s), only received 0"
+	
+	if !strings.Contains(output, expectedErrorOutput1) && !strings.Contains(output, expectedErrorOutput2) {
+		t.Errorf("Expected error message %q or %q not found in %q", expectedErrorOutput1, expectedErrorOutput2, output)
 	}
 }
