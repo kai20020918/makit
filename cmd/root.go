@@ -1,4 +1,3 @@
-// cmd/root.go (修正後)
 package cmd
 
 import (
@@ -128,6 +127,10 @@ func newRootCommand() *cobra.Command {
 			}
 		},
 	}
+
+    // ★以下を追加 (テスト時に不要な出力抑制のため)
+    cmd.SilenceUsage = true
+    cmd.SilenceErrors = true
 
 	// ★新しいコマンドインスタンスに対してフラグを登録します
 	cmd.Flags().StringVarP(&mode, "mode", "m", "", "Set file/directory mode (e.g. 755)")

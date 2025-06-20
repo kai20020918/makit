@@ -1,4 +1,3 @@
-// cmd/root_test.go (修正後)
 package cmd
 
 import (
@@ -87,7 +86,7 @@ func TestExecuteCreateFile(t *testing.T) {
 	defer cleanup()
 
 	testFileName := "test_file.txt"
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", testFileName}) // ★ cmd を渡す
+	output, err := executeAndCaptureOutput(t, cmd, []string{testFileName}) // ★ cmd を渡す
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -107,7 +106,7 @@ func TestExecuteCreateDirectory(t *testing.T) {
 	defer cleanup()
 
 	testDirName := "test_directory/"
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", testDirName})
+	output, err := executeAndCaptureOutput(t, cmd, []string{testDirName})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -127,7 +126,7 @@ func TestExecuteCreateNestedDirectory(t *testing.T) {
 	defer cleanup()
 
 	testPath := "parent/child/grandchild/"
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", testPath})
+	output, err := executeAndCaptureOutput(t, cmd, []string{testPath})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -149,7 +148,7 @@ func TestExecuteCreateFileInNewDirectory(t *testing.T) {
 	defer cleanup()
 
 	testPath := "new_dir/new_file.txt"
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", testPath})
+	output, err := executeAndCaptureOutput(t, cmd, []string{testPath})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -177,7 +176,7 @@ func TestExecuteNoCreateExistingFile(t *testing.T) {
 		t.Fatalf("Failed to create pre-existing file: %v", err)
 	}
 
-	output, cmdErr := executeAndCaptureOutput(t, cmd, []string{"makit", "-c", testFileName})
+	output, cmdErr := executeAndCaptureOutput(t, cmd, []string{"-c", testFileName})
 	if cmdErr != nil {
 		t.Fatalf("Execute() failed: %v", cmdErr)
 	}
@@ -200,7 +199,7 @@ func TestExecuteNoCreateNonExistingFile(t *testing.T) {
 	defer cleanup()
 
 	testFileName := "non_existing.txt"
-	output, cmdErr := executeAndCaptureOutput(t, cmd, []string{"makit", "-c", testFileName})
+	output, cmdErr := executeAndCaptureOutput(t, cmd, []string{"-c", testFileName})
 	if cmdErr != nil {
 		t.Fatalf("Execute() failed: %v", cmdErr)
 	}
@@ -219,7 +218,7 @@ func TestExecuteInvalidMode(t *testing.T) {
 	cleanup, cmd := setupTestEnv(t)
 	defer cleanup()
 
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", "-m", "invalid_mode", "dummy.txt"})
+	output, err := executeAndCaptureOutput(t, cmd, []string{"-m", "invalid_mode", "dummy.txt"})
 	if err == nil {
 		t.Errorf("Expected an error for invalid mode, but got none")
 	}
@@ -240,7 +239,7 @@ func TestExecuteValidMode(t *testing.T) {
 	modeStr := "755"
 	expectedPerm := os.FileMode(0755)
 
-	_, err := executeAndCaptureOutput(t, cmd, []string{"makit", "-m", modeStr, testFileName})
+	_, err := executeAndCaptureOutput(t, cmd, []string{"-m", modeStr, testFileName})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -259,7 +258,7 @@ func TestExecuteInvalidTimestamp(t *testing.T) {
 	cleanup, cmd := setupTestEnv(t)
 	defer cleanup()
 
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", "-d", "invalid_timestamp", "dummy.txt"})
+	output, err := executeAndCaptureOutput(t, cmd, []string{"-d", "invalid_timestamp", "dummy.txt"})
 	if err == nil {
 		t.Errorf("Expected an error for invalid timestamp, but got none")
 	}
@@ -279,7 +278,7 @@ func TestExecuteValidTimestamp(t *testing.T) {
 	timestampStr := "202401011030"
 	expectedTime, _ := time.Parse("200601021504", timestampStr)
 
-	_, err := executeAndCaptureOutput(t, cmd, []string{"makit", "-d", timestampStr, testFileName})
+	_, err := executeAndCaptureOutput(t, cmd, []string{"-d", timestampStr, testFileName})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -300,7 +299,7 @@ func TestExecuteVerboseMode(t *testing.T) {
 	defer cleanup()
 
 	testFileName := "verbose_file.txt"
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit", "-v", testFileName})
+	output, err := executeAndCaptureOutput(t, cmd, []string{"-v", testFileName})
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -322,7 +321,7 @@ func TestExecuteMultipleArgs(t *testing.T) {
 	defer cleanup()
 
 	args := []string{"file1.txt", "dir1/", "dir2/file2.txt"}
-	output, err := executeAndCaptureOutput(t, cmd, append([]string{"makit"}, args...))
+	output, err := executeAndCaptureOutput(t, cmd, args)
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -348,9 +347,7 @@ func TestExecuteEmptyArgs(t *testing.T) {
 	cleanup, cmd := setupTestEnv(t)
 	defer cleanup()
 
-	// os.Argsをnilにリセットし、引数を空にする
-	// CobraのMinimumNArgs(1)によりエラーとなることを期待
-	output, err := executeAndCaptureOutput(t, cmd, []string{"makit"}) // os.Args ではなく引数を直接渡す
+	output, err := executeAndCaptureOutput(t, cmd, []string{}) // 空の引数リストを渡す
 	
 	if err == nil {
 		t.Errorf("Expected an error for no arguments, but got none")
@@ -359,7 +356,6 @@ func TestExecuteEmptyArgs(t *testing.T) {
 	// Cobraのバージョンによってメッセージが異なる可能性があるのでContainsで確認
 	expectedErrorOutput := "Error: accepts at least 1 arg(s), received 0"
 	if !strings.Contains(output, expectedErrorOutput) {
-		// もしくは "Error: requires at least 1 arg(s), only received 0" が期待される場合
 		expectedErrorOutput = "Error: requires at least 1 arg(s), only received 0"
 		if !strings.Contains(output, expectedErrorOutput) {
 			t.Errorf("Expected error message %q or %q not found in %q", "Error: accepts at least 1 arg(s), received 0", "Error: requires at least 1 arg(s), only received 0", output)
