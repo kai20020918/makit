@@ -3,7 +3,7 @@ FROM golang:1-bullseye AS builder
 WORKDIR /work
 ARG CGO_ENABLED=0 [cite: 20]
 COPY . .
-RUN go build -o makit cmd/main/makit.go
+RUN go build -o makit cmd/root.go
 
 # 配布用イメージステージ
 FROM scratch

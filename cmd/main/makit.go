@@ -1,20 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"github.com/kai20020918/makit/cmd" // Importing the cmd package from makit
 )
 
-func hello() string {
-	return "Welcome to makit!"
-}
-
-func goMain(args []string) int {
-	fmt.Println(hello())
-	return 0
-}
-
 func main() {
-	status := goMain(os.Args)
-	os.Exit(status)
+    cmd.Execute()
 }

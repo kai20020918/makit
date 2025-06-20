@@ -1,4 +1,4 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = 'makit CLI Tool Documentation' # サイトタイトルを具体的に変更
 theme = "PaperMod"

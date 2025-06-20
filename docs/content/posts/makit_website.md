@@ -1,3 +1,9 @@
++++
+date = '2025-06-13T12:40:19+09:00'
+draft = true
+title = 'makit CLI Tool Documentation'
++++
+
 # 🗂️ makit
 
 A CLI tool that allows you to create files and directories with a single command  
@@ -23,6 +29,62 @@ makit [OPTION] <FILES|DIRS...>
 - `-c` Do not create file if it doesn’t exist
 - `-v` Enable verbose output
 - `-h` print this message.
+
+**Examples:**
+
+- **Create a single file:**
+
+  ```bash
+  makit my_new_file.txt
+  ```
+
+  This creates `my_new_file.txt` in the current directory.
+
+- **Create a directory:**
+
+  ```bash
+  makit my_new_directory/
+  ```
+
+  This creates `my_new_directory/` in the current directory.
+
+- **Create a file within a new nested directory:**
+
+  ```bash
+  makit project/src/main.go
+  ```
+
+  This creates `project/` and `project/src/` directories, then `main.go` inside `src/`.
+
+- **Create multiple files and directories at once:**
+
+  ```bash
+  makit client/index.html server/app.js docs/README.md
+  ```
+
+- **Create a directory with specific permissions (e.g., 700):**
+
+  ```bash
+  makit -m 700 private_data/
+  ```
+
+- **Create a file with a specific timestamp:**
+
+  ```bash
+  makit -d 202506201800 meeting_notes.txt
+  ```
+
+- **Attempt to create an existing file (with -c):**
+
+  ```bash
+  # Assuming 'existing_file.txt' already exists
+  makit -c existing_file.txt
+  # Output: Exists: existing_file.txt
+
+  # Assuming 'non_existent_file.txt' does NOT exist
+  makit -c non_existent_file.txt
+  # Output: Skipped (not created): non_existent_file.txt
+  ```
 
 ## 🍈 Installation
 
@@ -58,10 +120,6 @@ To use `makit` from any directory in your terminal, you need to place the `makit
 ### Developer Name
 
     Kairi Miyazaki
-
-### Icon
-
-<img src="file_dir.png" alt="ファイルとディレクトリが半分のアイコン" width="200">
 
 ### Origin of Name
 
