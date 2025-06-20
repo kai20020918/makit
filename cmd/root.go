@@ -41,7 +41,7 @@ func newRootCommand() *cobra.Command {
 					perm = os.FileMode(parsed)
 				} else {
 					fmt.Fprintf(os.Stderr, "invalid mode: %v\n", err)
-					os.Exit(1) // エラー時は終了
+					// os.Exit(1) // エラー時は終了
 				}
 				if verbose {
 					fmt.Printf("Parsed permission mode: %o\n", perm)
@@ -53,7 +53,7 @@ func newRootCommand() *cobra.Command {
 				t, err := time.Parse("200601021504", timestamp)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "invalid timestamp format: %v\n", err)
-					os.Exit(1) // エラー時は終了
+					// os.Exit(1) // エラー時は終了
 				}
 				tsTime = t
 				if verbose {
@@ -83,7 +83,7 @@ func newRootCommand() *cobra.Command {
 						err := os.MkdirAll(path, perm)
 						if err != nil {
 							fmt.Printf("Error creating directory: %v\n", err)
-							os.Exit(1) // エラー時は終了
+							// os.Exit(1) // エラー時は終了
 						}
 						fmt.Printf("Created directory: %s\n", path)
 					} else { // ファイルと判断
@@ -100,7 +100,7 @@ func newRootCommand() *cobra.Command {
 						f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, perm)
 						if err != nil {
 							fmt.Printf("Error creating file: %v\n", err)
-							os.Exit(1) // エラー時は終了
+							// os.Exit(1) // エラー時は終了
 						}
 						f.Close()
 						fmt.Printf("Created file: %s\n", path)
@@ -146,7 +146,7 @@ func Execute() {
 	cmd := newRootCommand()
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		// os.Exit(1)
 	}
 }
 
