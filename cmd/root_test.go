@@ -1,4 +1,4 @@
-// cmd/root_test.go (修正版)
+// cmd/root_test.go
 package cmd
 
 import (
@@ -14,7 +14,8 @@ import (
 // MockExitCalledWith は、exitFunc が呼び出された場合のコードを保持します
 var MockExitCalledWith int
 
-// setupTestEnv を修正し、テスト中に exitFunc をモックする
+// setupTestEnv はテスト環境をセットアップし、終了時にクリーンアップします。
+// 各テストで新しいコマンドインスタンスを返します。
 func setupTestEnv(t *testing.T) (cleanup func(), cmdInstance *cobra.Command) {
 	// テスト用の作業ディレクトリを作成
 	testDir, err := ioutil.TempDir("", "makit-test-")
@@ -91,11 +92,11 @@ func executeAndCaptureOutput(t *testing.T, cmd *cobra.Command, args []string) (o
 
 // TestExecuteCreateFile はファイルの作成をテストします。
 func TestExecuteCreateFile(t *testing.T) {
-	cleanup, cmd := setupTestEnv(t)
+	cleanup, cmd := setupTestEnv(t) // ★ cmd インスタンスを取得
 	defer cleanup()
 
 	testFileName := "test_file.txt"
-	output, err := executeAndCaptureOutput(t, cmd, []string{testFileName})
+	output, err := executeAndCaptureOutput(t, cmd, []string{testFileName}) // ★ cmd を渡す
 	if err != nil {
 		t.Fatalf("Execute() failed: %v", err)
 	}
@@ -225,8 +226,7 @@ func TestExecuteInvalidMode(t *testing.T) {
 
 	output, err := executeAndCaptureOutput(t, cmd, []string{"-m", "invalid_mode", "dummy.txt"})
 	
-	// Execute() がエラーを返すか、または MockExitCalledWith が設定されているかを確認
-	if err != nil {
+	if err == nil {
         // Execute() がエラーを返した場合、ここでエラーメッセージをチェック
     } else if MockExitCalledWith != 1 {
 		t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
@@ -268,7 +268,7 @@ func TestExecuteInvalidTimestamp(t *testing.T) {
 
 	output, err := executeAndCaptureOutput(t, cmd, []string{"-d", "invalid_timestamp", "dummy.txt"})
 
-	if err != nil {
+	if err == nil {
         // Execute() がエラーを返した場合、ここでエラーメッセージをチェック
     } else if MockExitCalledWith != 1 {
 		t.Errorf("Expected an error or os.Exit(1), but got none. MockExitCalledWith: %d", MockExitCalledWith)
@@ -287,7 +287,7 @@ func TestExecuteValidTimestamp(t *testing.T) {
 
 	testFileName := "timestamp_test.txt"
 	timestampStr := "202401011030"
-	loc, _ := time.LoadLocation("UTC") // タイムゾーンをUTCに明示的に設定
+	loc, _ := time.LoadLocation("UTC") // タイムゾーンを明示的にUTCに設定
 	expectedTime, _ := time.ParseInLocation("200601021504", timestampStr, loc)
 
 

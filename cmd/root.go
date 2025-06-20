@@ -1,4 +1,4 @@
-// cmd/root.go (修正版)
+// cmd/root.go
 package cmd
 
 import (
